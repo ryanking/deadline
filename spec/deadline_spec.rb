@@ -58,4 +58,43 @@ describe "Deadline" do
       end.should_not raise_error(Deadline::Error)
     end
   end
+
+  describe "nested invocations" do
+    describe "#deadline" do
+      it "should set each deadline" do
+        Time.should_receive(:now).and_return(12, 13, 14, 15)
+        Deadline.deadline(10) do
+          Thread.current[:deadlines].should == [22]
+          Deadline.remaining.should == 9
+          Deadline.deadline(5) do
+            Thread.current[:deadlines].should == [22, 19]
+            Deadline.remaining.should == 4
+          end
+        end
+      end
+
+      it "should pop off nested deadlines" do
+        Time.should_receive(:now).and_return(12, 13)
+        Deadline.deadline(1) do 
+          Thread.current[:deadlines].should == [13]
+          Deadline.deadline(1) do
+            Thread.current[:deadlines].should == [13, 14]
+          end
+          Thread.current[:deadlines].should == [13]
+        end
+      end
+
+      it "should always enforce the (temporally) first deadline" do
+        Time.should_receive(:now).and_return(12, 13, 14, 15)
+        Deadline.deadline(3) do
+          Thread.current[:deadlines].should == [15]
+          Deadline.remaining.should == 2
+          Deadline.deadline(5) do
+            Thread.current[:deadlines].should == [15, 19]
+            Deadline.remaining.should == 0
+          end
+        end
+      end
+    end
+  end
 end

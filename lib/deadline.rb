@@ -3,14 +3,18 @@ module Deadline extend self
 
   def deadline(time)
     Thread.current[:deadlines] ||= []
-    Thread.current[:deadlines] << (Time.now + time)
+    Thread.current[:deadlines].push(Time.now + time)
     yield
   ensure
-    Thread.current[:deadlines] = []
+    Thread.current[:deadlines].pop
   end
 
   def remaining
-    (Thread.current[:deadlines] && Thread.current[:deadlines].length > 0) ? Thread.current[:deadlines].last - Time.now : nil
+    if Thread.current[:deadlines] && Thread.current[:deadlines].length > 0
+      Thread.current[:deadlines].min - Time.now
+    else
+      Infinity
+    end
   end
 
   def expired?
