@@ -6,14 +6,14 @@ describe "Deadline" do
     it "should set the deadline" do
       Time.should_receive(:now).once.and_return(12)
       Deadline.deadline(1) do
-        Thread.current[:deadline].should == 13
+        Thread.current[:deadlines].should == [13]
       end
     end
 
     it "should cleanup after itself" do
       Deadline.deadline(1) do
       end
-      Thread.current[:deadline].should be_nil
+      Thread.current[:deadlines].should == []
     end
   end
 

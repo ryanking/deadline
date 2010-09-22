@@ -2,15 +2,15 @@ module Deadline extend self
   class Error < StandardError; end
 
   def deadline(time)
-    #TODO figure out what to do with nested calls
-    Thread.current[:deadline] = Time.now + time
+    Thread.current[:deadlines] ||= []
+    Thread.current[:deadlines] << (Time.now + time)
     yield
   ensure
-    Thread.current[:deadline] = nil
+    Thread.current[:deadlines] = []
   end
 
   def remaining
-    Thread.current[:deadline] ? Thread.current[:deadline] - Time.now : nil
+    (Thread.current[:deadlines] && Thread.current[:deadlines].length > 0) ? Thread.current[:deadlines].last - Time.now : nil
   end
 
   def expired?
