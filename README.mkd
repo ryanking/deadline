@@ -1,0 +1,40 @@
+# Deadline
+
+In order to have a robust system, you often need to limit the amount of time any operation can take. In ruby you have a few options, Timeout and SystemTimer. Each of these has their flaws. Charles Nutter explained many of the problems with the Timeout module here: http://blog.headius.com/2008/02/rubys-threadraise-threadkill-timeoutrb.html. Note that some of those problems apply to SystemTimer as well. Additionally SystemTimer doesn't interact well when you have other native code in  your application.
+
+So, Deadline. Deadline lets you enforce timeouts on code that does blocking system calls with more control, but only under certain conditions (some of which you need to do anyway). It will only work if:
+
+* all blocking native calls enforce their own timeouts
+* you (and any libraries) pass Deadline's timeouts down to those native calls
+* you check the deadlines when you're in a position to clean up whatever state necessary
+
+The basic pattern is thus:
+
+  Deadline.deadline(1.3) do
+    begin 
+      Deadline.raise_if_expired
+      r, _, _ = IO.select([socket], nil, nil, Deadline.remaining)
+    end while r.length == 0
+    io = r.first
+    io.read #this won't block, so we don't enforce a timeout here
+  end
+
+Note that this approach is worse-is-better. It takes more effort that other approaches, but has the convenient side effect of working correctly when used correctly. Also, it won't protect you from runaway ruby code. Look at the specs for more details.
+
+## Magic Bullets
+
+...are only useful if you have a magic gun.
+
+## Note on Contributions
+ 
+* Fork.
+* Make your feature addition or bug fix.
+* Add specs for it. This is important so I don't break it in a
+  future version unintentionally.
+* Commit, do not mess with rakefile, version, or history.
+  (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
+* Send me a pull request. Bonus points for topic branches.
+
+## Copyright
+
+Copyright (c) 2010 Twitter, Inc. and Ryan King. See LICENSE for details.
